@@ -1,0 +1,20 @@
+{
+	"siteId": "274b9745-5af7-4609-afa8-43133f2f6c4b",
+	"geolocation": {
+		"data": {
+			"city": "Amroha",
+			"country": {
+				"code": "IN",
+				"name": "India"
+			},
+			"subdivision": {
+				"code": "UP",
+				"name": "Uttar Pradesh"
+			},
+			"timezone": "Asia/Kolkata",
+			"latitude": 28.8984,
+			"longitude": 78.4741
+		},
+		"timestamp": 1725809714702
+	}
+}
