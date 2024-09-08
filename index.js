@@ -33,12 +33,7 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(morgan("common"));
-app.use('/images', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://social-node1.netlify.app'); // Your frontend URL
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-}, express.static(path.join(__dirname, 'public/images')));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // Multer setup
 const storage = multer.diskStorage({
