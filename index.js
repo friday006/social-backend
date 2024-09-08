@@ -1,5 +1,12 @@
 const express = require("express");
+const cors = require('cors');
 const app = express();
+// Use CORS middleware
+app.use(cors({
+  origin: 'https://social-node1.netlify.app', // Replace with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
