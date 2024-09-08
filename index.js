@@ -31,7 +31,10 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
-app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use('/images', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://social-backend-gp1q.onrender.com'); // Your frontend domain
+  next();
+}, express.static(path.join(__dirname, 'public/images')));
 
 // Multer setup
 const storage = multer.diskStorage({
