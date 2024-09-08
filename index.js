@@ -11,6 +11,8 @@ const postRoute = require("./routes/posts");
 const router = express.Router();
 const path = require("path");
 
+const PORT = process.env.PORT || 8800;
+
 dotenv.config();
 
 mongoose.connect(
@@ -49,6 +51,6 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
 
-app.listen(8800, () => {
+app.listen(PORT, () => {
   console.log("Backend server is running!");
 });
