@@ -29,7 +29,9 @@ mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopol
 
 // Middleware
 app.use(express.json());
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 app.use(morgan("common"));
 app.use('/images', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://social-node1.netlify.app'); // Your frontend URL
