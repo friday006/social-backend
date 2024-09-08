@@ -32,7 +32,9 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
 app.use('/images', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://social-backend-gp1q.onrender.com'); // Your frontend domain
+  res.header('Access-Control-Allow-Origin', 'https://social-node1.netlify.app'); // Your frontend URL
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 }, express.static(path.join(__dirname, 'public/images')));
 
