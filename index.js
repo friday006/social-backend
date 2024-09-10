@@ -1,13 +1,13 @@
 const express = require("express");
-const cors = require("cors");
+const cors = require('cors');
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const multer = require("multer");
-const fs = require("fs");
-const { google } = require("googleapis");
 const path = require("path");
+const fs = require('fs');
+const { uploadFile } = require('./upload');
+const { downloadFile } = require('./download');
 
 dotenv.config();
 
@@ -33,54 +33,40 @@ app.use(helmet({
 }));
 app.use(morgan("common"));
 
-// Multer setup for in-memory storage
-const upload = multer({ storage: multer.memoryStorage() });
+// Route to upload a file
+app.post("/api/upload", (req, res) => {
+  const file = req.files.file; // Use file upload middleware such as multer
+  const filePath = path.join(__dirname, 'uploads', file.name);
 
-// Google Drive Authentication
-const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, "credentials.json"), // Path to the credentials.json file
-  scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
+  // Save file locally before uploading to Drive
+  file.mv(filePath, (err) => {
+    if (err) return res.status(500).send(err);
 
-const drive = google.drive({ version: 'v3', auth });
-
-// Function to upload file to Google Drive
-const uploadFileToDrive = async (file) => {
-  const { originalname, buffer } = file;
-  const driveResponse = await drive.files.create({
-    requestBody: {
-      name: originalname,
-      mimeType: file.mimetype,
-    },
-    media: {
-      mimeType: file.mimetype,
-      body: buffer, // File buffer from multer
-    },
+    // Upload to Google Drive
+    uploadFile(filePath);
+    res.status(200).json("File uploaded successfully");
   });
-
-  return driveResponse.data.id; // Return file ID
-};
-
-// Route for file upload to Google Drive
-app.post("/api/upload", upload.single("file"), async (req, res) => {
-  try {
-    const fileId = await uploadFileToDrive(req.file);
-    res.status(200).json({ message: "File uploaded successfully", fileId });
-  } catch (error) {
-    console.error("File upload failed:", error);
-    res.status(500).json({ error: "File upload failed" });
-  }
 });
 
-// Routes
-const userRoute = require("./routes/users");
-const authRoute = require("./routes/auth");
-const postRoute = require("./routes/posts");
-app.use("/api/auth", authRoute);
-app.use("/api/users", userRoute);
-app.use("/api/posts", postRoute);
+// Route to serve files
+app.get("/images/:fileId", (req, res) => {
+  const fileId = req.params.fileId;
+  const dest = path.join(__dirname, 'public/images', fileId);
 
-// Server
+  // Download file from Google Drive
+  downloadFile(fileId, dest);
+  res.sendFile(dest, (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      res.status(500).send('Error sending file');
+    }
+  });
+});
+
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/users", require("./routes/users"));
+app.use("/api/posts", require("./routes/posts"));
+
 const PORT = process.env.PORT || 8800;
 app.listen(PORT, () => {
   console.log("Backend server is running on port", PORT);
