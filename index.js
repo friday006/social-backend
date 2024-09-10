@@ -16,7 +16,7 @@ const app = express();
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'https://social-node1.netlify.app', // Replace with your frontend URL
+  origin: ['https://social-node1.netlify.app','http://localhost:3000'],// Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
