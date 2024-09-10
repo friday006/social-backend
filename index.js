@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const multer = require('multer');
 const path = require("path");
 const fs = require('fs');
 const { uploadFile } = require('./upload');
@@ -33,34 +34,32 @@ app.use(helmet({
 }));
 app.use(morgan("common"));
 
-// Route to upload a file
-app.post("/api/upload", (req, res) => {
-  const file = req.files.file; // Use file upload middleware such as multer
-  const filePath = path.join(__dirname, 'uploads', file.name);
+// Multer setup
+const storage = multer.memoryStorage(); // Use memory storage to avoid saving files locally
+const upload = multer({ storage: storage });
 
-  // Save file locally before uploading to Drive
-  file.mv(filePath, (err) => {
-    if (err) return res.status(500).send(err);
-
-    // Upload to Google Drive
-    uploadFile(filePath);
-    res.status(200).json("File uploaded successfully");
-  });
-});
-
-// Route to serve files
-app.get("/images/:fileId", (req, res) => {
-  const fileId = req.params.fileId;
-  const dest = path.join(__dirname, 'public/images', fileId);
-
-  // Download file from Google Drive
-  downloadFile(fileId, dest);
-  res.sendFile(dest, (err) => {
-    if (err) {
-      console.error('Error sending file:', err);
-      res.status(500).send('Error sending file');
+// Routes
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
     }
-  });
+    
+    const fileName = req.body.name || Date.now() + path.extname(req.file.originalname);
+    const filePath = path.join(__dirname, 'uploads', fileName);
+
+    // Save file temporarily
+    fs.writeFileSync(filePath, req.file.buffer);
+
+    // Upload file to Google Drive
+    const fileId = await uploadFile(filePath, fileName);
+    fs.unlinkSync(filePath); // Clean up temporary file
+
+    res.status(200).json({ message: "File uploaded successfully", fileId: fileId });
+  } catch (error) {
+    console.error("File upload failed:", error);
+    res.status(500).json({ error: "File upload failed" });
+  }
 });
 
 app.use("/api/auth", require("./routes/auth"));

@@ -1,30 +1,44 @@
 const { google } = require('googleapis');
-const fs = require('fs');
 const path = require('path');
-const { authorize } = require('./drive');
+const fs = require('fs');
+const { authorize } = require('./drive'); // Import the authorize function
 
-function uploadFile(filePath) {
-  authorize(async (auth) => {
+/**
+ * Upload file to Google Drive
+ */
+async function uploadFile(filePath, fileName) {
+    const auth = await authorize();  // Make sure this is your Google auth function
     const drive = google.drive({ version: 'v3', auth });
+  
     const fileMetadata = {
-      name: path.basename(filePath),
+      name: fileName,
+      parents: ['1ASobD0OKZVkROJZh2DAfrqvZ1XjNI2d7']  // Replace with the actual folder ID
     };
+  
     const media = {
-      mimeType: 'application/octet-stream', // Adjust based on your file type
+      mimeType: 'image/jpeg',  // Adjust this based on file type
       body: fs.createReadStream(filePath),
     };
-
-    try {
-      const response = await drive.files.create({
-        resource: fileMetadata,
-        media: media,
-        fields: 'id, webViewLink',
-      });
-      console.log('File uploaded successfully. File ID:', response.data.id);
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  });
-}
+  
+    const response = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id',
+    });
+  
+    const fileId = response.data.id;
+    console.log('File uploaded successfully, File ID: ', fileId);
+  
+    // Make file publicly accessible
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+  
+    return fileId;
+  }
 
 module.exports = { uploadFile };
