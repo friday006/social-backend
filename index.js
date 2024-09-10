@@ -1,13 +1,12 @@
 const express = require("express");
-const cors = require('cors');
+const cors = require("cors");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const multer = require("multer");
-const userRoute = require("./routes/users");
-const authRoute = require("./routes/auth");
-const postRoute = require("./routes/posts");
+const fs = require("fs");
+const { google } = require("googleapis");
 const path = require("path");
 
 dotenv.config();
@@ -33,34 +32,55 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(morgan("common"));
-app.use("/images", express.static(path.join(__dirname, "public/images")));
 
-// Multer setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "public/images"));
-  },
-  filename: (req, file, cb) => {
-    const fileName = req.body.name || Date.now() + path.extname(file.originalname);
-    cb(null, fileName);
-  },
+// Multer setup for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Google Drive Authentication
+const auth = new google.auth.GoogleAuth({
+  keyFile: path.join(__dirname, "credentials.json"), // Path to the credentials.json file
+  scopes: ['https://www.googleapis.com/auth/drive.file'],
 });
-const upload = multer({ storage: storage });
 
-// Routes
-app.post("/api/upload", upload.single("file"), (req, res) => {
+const drive = google.drive({ version: 'v3', auth });
+
+// Function to upload file to Google Drive
+const uploadFileToDrive = async (file) => {
+  const { originalname, buffer } = file;
+  const driveResponse = await drive.files.create({
+    requestBody: {
+      name: originalname,
+      mimeType: file.mimetype,
+    },
+    media: {
+      mimeType: file.mimetype,
+      body: buffer, // File buffer from multer
+    },
+  });
+
+  return driveResponse.data.id; // Return file ID
+};
+
+// Route for file upload to Google Drive
+app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
-    res.status(200).json("File uploaded successfully");
+    const fileId = await uploadFileToDrive(req.file);
+    res.status(200).json({ message: "File uploaded successfully", fileId });
   } catch (error) {
     console.error("File upload failed:", error);
     res.status(500).json({ error: "File upload failed" });
   }
 });
 
+// Routes
+const userRoute = require("./routes/users");
+const authRoute = require("./routes/auth");
+const postRoute = require("./routes/posts");
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
 
+// Server
 const PORT = process.env.PORT || 8800;
 app.listen(PORT, () => {
   console.log("Backend server is running on port", PORT);
