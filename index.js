@@ -34,6 +34,8 @@ app.use(helmet({
 }));
 app.use(morgan("common"));
 
+// app.use("/images", express.static(path.join(__dirname, "public/images")));
+
 // Multer setup
 const storage = multer.memoryStorage(); // Use memory storage to avoid saving files locally
 const upload = multer({ storage: storage });

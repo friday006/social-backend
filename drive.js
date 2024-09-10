@@ -3,7 +3,13 @@ const path = require('path');
 const fs = require('fs');
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const CREDENTIALS_PATH = path.join(__dirname, 'credentials.json'); // Path to your credentials file
+const credentialsBase64 = process.env.GOOGLE_CREDENTIALS_BASE64; // Path to your credentials file
+
+if (!credentialsBase64) {
+    throw new Error('Missing credentials environment variable.');
+}
+const credentialsJson = Buffer.from(credentialsBase64, 'base64').toString('utf-8');
+const CREDENTIALS_PATH = JSON.parse(credentialsJson);
 
 /**
  * Authorize using service account credentials
