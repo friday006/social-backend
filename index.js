@@ -8,7 +8,7 @@ const multer = require('multer');
 const path = require("path");
 const fs = require('fs');
 const { uploadFile } = require('./upload');
-const { downloadFile } = require('./download');
+const { getDriveFileUrl } = require('./download');
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const app = express();
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'https://social-node1.netlify.app', // Replace with your frontend URL
+  origin: ['https://social-node1.netlify.app','http://localhost:3000'], // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -61,6 +61,16 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   } catch (error) {
     console.error("File upload failed:", error);
     res.status(500).json({ error: "File upload failed" });
+  }
+});
+
+app.get("/api/files/:fileId", async (req, res) => {
+  const { fileId } = req.params;
+  try {
+    const fileUrl = await getDriveFileUrl(fileId);
+    res.status(200).json({ fileUrl: fileUrl });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching the file URL" });
   }
 });
 
