@@ -4,11 +4,11 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const multer = require('multer');
+const multer = require("multer");
+const userRoute = require("./routes/users");
+const authRoute = require("./routes/auth");
+const postRoute = require("./routes/posts");
 const path = require("path");
-const fs = require('fs');
-const { uploadFile } = require('./upload');
-const { getDriveFileUrl } = require('./download');
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const app = express();
 
 // Use CORS middleware
 app.use(cors({
-  origin: ['https://social-node1.netlify.app','http://localhost:3000'],// Replace with your frontend URL
+  origin: 'https://social-node1.netlify.app', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -33,50 +33,33 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 app.use(morgan("common"));
-
-// app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // Multer setup
-const storage = multer.memoryStorage(); // Use memory storage to avoid saving files locally
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "public/images"));
+  },
+  filename: (req, file, cb) => {
+    const fileName = req.body.name || Date.now() + path.extname(file.originalname);
+    cb(null, fileName);
+  },
+});
 const upload = multer({ storage: storage });
 
 // Routes
-app.post("/api/upload", upload.single("file"), async (req, res) => {
+app.post("/api/upload", upload.single("file"), (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-    
-    const fileName = req.body.name || Date.now() + path.extname(req.file.originalname);
-    const filePath = path.join(__dirname, 'uploads', fileName);
-
-    // Save file temporarily
-    fs.writeFileSync(filePath, req.file.buffer);
-
-    // Upload file to Google Drive
-    const fileId = await uploadFile(filePath, fileName);
-    fs.unlinkSync(filePath); // Clean up temporary file
-
-    res.status(200).json({ message: "File uploaded successfully", fileId: fileId });
+    res.status(200).json("File uploaded successfully");
   } catch (error) {
     console.error("File upload failed:", error);
     res.status(500).json({ error: "File upload failed" });
   }
 });
 
-app.get("/api/files/:fileId", async (req, res) => {
-  const { fileId } = req.params;
-  try {
-    const fileUrl = await getDriveFileUrl(fileId);
-    res.status(200).json({ fileUrl: fileUrl });
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching the file URL" });
-  }
-});
-
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/users", require("./routes/users"));
-app.use("/api/posts", require("./routes/posts"));
+app.use("/api/auth", authRoute);
+app.use("/api/users", userRoute);
+app.use("/api/posts", postRoute);
 
 const PORT = process.env.PORT || 8800;
 app.listen(PORT, () => {
