@@ -15,7 +15,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000'], // Frontend URL
+  origin: [
+    'http://localhost:3000', // Allow localhost during development
+    'https://your-netlify-app-url.netlify.app', // Allow your Netlify frontend in production
+  ],
+  credentials: true, // If you're using cookies or sessions
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
