@@ -2,6 +2,11 @@ const router = require("express").Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 
+const jwt = require("jsonwebtoken");
+
+// Secret key for JWT (store securely in .env file)
+const JWT_SECRET = process.env.JWT_SECRET ;
+
 //REGISTER
 router.post('/register', async (req, res) => {
   try {
@@ -26,19 +31,40 @@ router.post('/register', async (req, res) => {
   }
 });
 
-//LOGIN
+// LOGIN (Set JWT in cookies)
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(404).json("user not found");
+    if (!user) return res.status(404).json("User not found");
 
     const validPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!validPassword) return res.status(400).json("wrong password");
+    if (!validPassword) return res.status(400).json("Wrong password");
 
-    res.status(200).json(user);
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: '1h' } // Token expires in 1 hour
+    );
+
+    // Set the JWT token in an HTTP-Only cookie
+    res.cookie('token', token, {
+      httpOnly: true,   // Prevents access to the cookie via JavaScript (more secure)
+      secure: process.env.NODE_ENV === 'production',  // Use secure cookies in production (requires HTTPS)
+      sameSite: 'strict',  // Controls if cookies are sent with cross-site requests
+      maxAge: 3600000,     // Set cookie expiration time (1 hour in this case)
+    });
+
+    res.status(200).json({ message: "Logged in successfully", user });
   } catch (err) {
     res.status(500).json(err);
   }
+});
+
+// LOGOUT (Clear the JWT token from cookies)
+router.post("/logout", (req, res) => {
+  res.clearCookie('token'); // Clear the token from cookies
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 
