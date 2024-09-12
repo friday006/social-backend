@@ -37,7 +37,7 @@ mongoose.connect(process.env.MONGO_URL, {
   .catch(err => console.error("MongoDB connection error", err));
 
 // Serve static files from the 'public' directory
-app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+// app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
 // Routes
 app.use("/api/auth", authRoute);

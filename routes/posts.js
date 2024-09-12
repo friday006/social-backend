@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const verifyToken = require("../middleware/verifyToken");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const multer = require("multer");
@@ -86,7 +87,7 @@ router.get("/timeline/:userId", async (req, res) => {
 });
 
 // Route to fetch a user's posts by their username
-router.get("/profile/:username", async (req, res) => {
+router.get("/profile/:username",verifyToken , async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
     const posts = await Post.find({ userId: user._id });
