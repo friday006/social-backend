@@ -1,11 +1,13 @@
 const router = require("express").Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+require('dotenv').config()
 
 const jwt = require("jsonwebtoken");
 
 // Secret key for JWT (store securely in .env file)
-const JWT_SECRET = process.env.JWT_SECRET ;
+const JWT_SECRET = process.env.JWT_SECRET;
+console.log(JWT_SECRET)
 
 //REGISTER
 router.post('/register', async (req, res) => {
@@ -60,7 +62,6 @@ router.post("/login", async (req, res) => {
     res.status(500).json(err);
   }
 });
-
 // LOGOUT (Clear the JWT token from cookies)
 router.post("/logout", (req, res) => {
   res.clearCookie('token'); // Clear the token from cookies

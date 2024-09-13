@@ -1,4 +1,3 @@
-const verifyToken = require("../middleware/verifyToken");
 const User = require("../models/User");
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
@@ -42,7 +41,7 @@ router.delete("/:id", async (req, res) => {
   });
 
 // get a user
-router.get("/",verifyToken, async (req, res) => {
+router.get("/", async (req, res) => {
   const userId = req.query.userId;
   const username = req.query.username;
 
