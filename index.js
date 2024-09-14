@@ -8,7 +8,7 @@ const authRoute = require("./routes/auth");
 const userRoute = require("./routes/users");
 const postRoute = require("./routes/posts");
 const path = require("path")
-
+const cookieParser = require('cookie-parser');
 dotenv.config();
 
 const app = express();
@@ -38,6 +38,8 @@ mongoose.connect(process.env.MONGO_URL, {
 
 // Serve static files from the 'public' directory
 // app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+// Add this line to use cookie-parser
+app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoute);

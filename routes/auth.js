@@ -2,12 +2,29 @@ const router = require("express").Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 require('dotenv').config()
+const cookieParser = require('cookie-parser');
 
 const jwt = require("jsonwebtoken");
 
 // Secret key for JWT (store securely in .env file)
 const JWT_SECRET = process.env.JWT_SECRET;
-console.log(JWT_SECRET)
+// console.log(JWT_SECRET)
+router.use(cookieParser());
+
+// Endpoint to verify token and provide it for the frontend
+router.get('/check', (req, res) => {
+  const token = req.cookies.token; // Get token from cookies
+  if (token) {
+    try {
+      const decodedToken = jwt.verify(token, JWT_SECRET);
+      res.json({ token: req.cookies.token, ...decodedToken });
+    } catch (error) {
+      res.status(401).json({ message: 'Invalid token' });
+    }
+  } else {
+    res.json({ message: 'No token found' });
+  }
+});
 
 //REGISTER
 router.post('/register', async (req, res) => {
@@ -44,7 +61,7 @@ router.post("/login", async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      { id: user._id, username: user.username, isAdmin: user.isAdmin },
       JWT_SECRET,
       { expiresIn: '1h' } // Token expires in 1 hour
     );
