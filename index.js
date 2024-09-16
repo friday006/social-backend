@@ -17,7 +17,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:3000', // Allow localhost during development
-    'https://social-node1.netlify.app', // Allow your Netlify frontend in production
+    'https://social-media-cdc2.onrender.com', // Allow your render in production
   ],
   credentials: true, // If you're using cookies or sessions
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -25,8 +25,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "img-src": ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+      // Add other directives as needed
+    },
+  },
   crossOriginResourcePolicy: false,
 }));
+
+
 app.use(morgan("common"));
 
 // MongoDB connection
@@ -45,6 +54,14 @@ app.use(cookieParser());
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute); // Link post routes
+
+// Serve React Frontend as static files
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Serve the frontend for any unknown routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 // Server start
 const PORT = process.env.PORT || 8800;
