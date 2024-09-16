@@ -25,8 +25,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "img-src": ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+      // Add other directives as needed
+    },
+  },
   crossOriginResourcePolicy: false,
 }));
+
+
 app.use(morgan("common"));
 
 // MongoDB connection
